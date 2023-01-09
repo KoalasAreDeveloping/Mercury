@@ -11,15 +11,20 @@ export class ResponseConstructor {
 
     public setCookies(cookies: Object): void {
         
+        // Get a list of keys and create an array to store cookies in.
         let keys = Object.keys(cookies)
         let cookieArray = []
 
         for (let key in keys) {
 
-            cookieArray.push(`${keys[key]}=${cookies[keys[key]]}`)
+            // For loop makes key an index in the array, so the value we want is collected from the array.
+            key = keys[key]
+            // Add cookies to the array in the Set-Cookie header format
+            cookieArray.push(`${key}=${cookies[key]}`)
 
         }
 
+        // Set Set-Cookie header to the cookies created.
         this.headers['Set-Cookie'] = cookieArray
 
     }
@@ -59,6 +64,3 @@ export class ResponseConstructor {
     }
 
 }
-
-// https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies
-// https://nodejs.org/api/http2.html#responsesetheadername-value

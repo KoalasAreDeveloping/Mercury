@@ -1,4 +1,4 @@
-import { Router } from "./router.js"
+import { errorHandlerCtx, Router } from "./router.js"
 
 import * as http2 from 'node:http2'
 import * as fs from 'node:fs'
@@ -128,6 +128,12 @@ export class MercuryServer implements http2.Http2SecureServer {
         this.HTTP2.listen(options, callback)
         console.log('Opened server on', this.HTTP2.address())
     
+    }
+
+    public serveError(ctx: errorHandlerCtx) {
+
+        this.router.errorHandler(ctx)
+
     }
     
 }
