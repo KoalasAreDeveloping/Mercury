@@ -1,8 +1,8 @@
-import { Router } from "./router.js"
+import { errorHandlerCtx, Router } from "./router.js"
 
 import * as http2 from 'node:http2'
 import * as fs from 'node:fs'
-import { exec } from 'node:child_process'
+import { execSync } from 'node:child_process'
 import { cwd } from 'node:process'
 
 export class MercuryServer implements http2.Http2SecureServer { 
@@ -53,7 +53,7 @@ export class MercuryServer implements http2.Http2SecureServer {
             try {
 
                 // Generate keys for development server
-                exec("openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj \/CN=localhost -keyout localhost-privkey.pem -out localhost-cert.pem", (err, stdout, stderr) => {})
+                console.log(execSync(`openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj \/CN=localhost -keyout localhost-privkey.pem -out localhost-cert.pem`))
 
                 // Sets development serber keys
                 options.key = fs.readFileSync(cwd() + '/localhost-privkey.pem'),
@@ -128,6 +128,12 @@ export class MercuryServer implements http2.Http2SecureServer {
         this.HTTP2.listen(options, callback)
         console.log('Opened server on', this.HTTP2.address())
     
+    }
+
+    public serveError(ctx: errorHandlerCtx) {
+
+        this.router.errorHandler(ctx)
+
     }
     
 }

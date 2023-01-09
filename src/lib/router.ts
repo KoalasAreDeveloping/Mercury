@@ -22,7 +22,7 @@ export class Router {
 
         // Highly recommended to replace this with your own function
         this.errorHandler = (ctx: errorHandlerCtx) => {
-            console.log(`${ctx.code} - URL Object:\n${ctx.url}\n(${ctx.req.socket.remoteFamily}) ${ctx.req.socket.remoteAddress} on ${ctx.req.socket.remotePort}\n\n`)
+            console.log(`${ctx.code} - URL: ${ctx.url}\n(${ctx.req.socket.remoteFamily}) ${ctx.req.socket.remoteAddress} on ${ctx.req.socket.remotePort}\n\n\n`)
             ctx.res.writeHead(ctx.code, {'Content-Type': 'text/plain'})
             ctx.res.write(`An error occurred.\n\n${ctx.code}: ${this.errorCodes[ctx.code].short}\n  ${this.errorCodes[ctx.code].long}`)
             ctx.res.end()
