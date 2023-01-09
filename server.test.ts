@@ -14,12 +14,15 @@ const server = new Mercury.MercuryServer({dev: true})
 class routes {
 
     @server.router.route("/tests/post/")
-        // @ts-ignore Reason: Will be transpiled with --experimentalDecorators flag
+    // @ts-ignore Reason: Will be transpiled with --experimentalDecorators flag
     public PostTest(ctx) {
+
         console.log("PostTest called!")
-        ctx.res.writeHead(200, { 'Content-Type': 'text/plain' })
-        ctx.res.write("Hello World!")
-        ctx.res.end()
+        let response = new Mercury.ResponseConstructor()
+        response.setCookies({ "test": "Hello World!" })
+        response.addHeaders({"Content-Type": "text/html"})
+        response.serveFile(ctx.res, "./test.html")
+
     }
 
 }
