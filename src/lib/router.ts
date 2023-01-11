@@ -1,3 +1,5 @@
+import { ResponseConstructor } from "./responseConstructor.js"
+
 import * as url from "node:url"
 
 
@@ -6,8 +8,11 @@ export class Router {
     handlers: Object
     errorCodes: Object
     errorHandler: (ctx: errorHandlerCtx) => void
+    staticPath: string
 
-    constructor() {
+    constructor(staticPath?: string) {
+
+        this.staticPath = staticPath || "static"
 
         this.handlers = {}
         this.errorCodes = {
@@ -31,7 +36,7 @@ export class Router {
     }
     
     // Routes requests to handlers.
-    public routingListener(req, res): any {
+    public routingListener(req: http2.Http2ServerRequest, res: http2.Http2ServerResponse): any {
 
         // Create URL object
         var urlObj = new url.URL(req.url, "https://" + req.headers.host)
@@ -45,9 +50,28 @@ export class Router {
             route = urlObj.pathname
         }
 
+
         try {
-            // Pass request context object to route handler if avaliable
-            return this.handlers[route]({ req: req, res: res, url: urlObj })
+
+            // Check if route is requesting a static file, which can be found in the static directory.
+            if (route.split("/")[1] == "static") {
+
+                // Send static file
+                let response = new ResponseConstructor
+                response.headers["content-type"] = req.headers["content-type"] || "*/*"
+                response.serveFile(res, `${this.staticPath}/${route.slice(8, route.length - 1)}`)
+    
+                // check if route is requesting a builtin webpage/resource
+            } else if (route.split("/")[1] == "") {
+
+                //TODO: create builtin route routing handler
+                throw new Error("Not Yet Implemented")
+
+            } else {
+                // Pass request context object to route handler if avaliable
+                return this.handlers[route]({ req: req, res: res, url: urlObj })
+            }
+
         } catch (e) {
             return this.errorHandler({ req: req, res: res, url: urlObj, code: 404 })
         }
