@@ -10,13 +10,12 @@ const config = {
 }
 
 const server = new Mercury.MercuryServer({dev: true})
-
+const router2 = new Mercury.Router()
 class routes {
 
     @server.router.route("/tests/post/")
     public PostTest(ctx) {
 
-        console.log("PostTest called!")
         let response = new Mercury.ResponseConstructor()
         response.setCookies({ "test": "Hello World!" })
         response.addHeaders({"Content-Type": "text/html"})
@@ -24,31 +23,47 @@ class routes {
 
     }
 
+    @router2.route("/tests/post/")
+    public MergePostTest(ctx) {
+
+        let response = new Mercury.ResponseConstructor()
+        response.setCookies({ "test": "Hello World!" })
+        response.addHeaders({"Content-Type": "text/html"})
+        response.serveFile(ctx.res, "./test.html")
+
+    }
 }
 
+server.router.merge(router2, "/merged")
 server.run(config)
 console.log("Started server")
 
 const client = http2.connect(`https://${config.host}:${config.port}/`, { ca: fs.readFileSync('localhost-cert.pem'), rejectUnauthorized: false })
 
 // Test POST request
-let req = client.request({
+var start = new Date().getTime()
+var req = client.request({
     ":path": "/tests/post/"
 })
 
 req.on("response", (h, f) => {
+    console.log(`Response time: ${new Date().getTime() - start}ms`)
+    console.log("/tests/post/")
     console.log(h)
     console.log(f)
+    console.log("\n\n")
 })
 req.end()
 
 req = client.request({
-    ":path": "/tests/post"
+    ":path": "/merged/tests/post/"
 })
-
 req.on("response", (h, f) => {
+    console.log(`Response time: ${new Date().getTime() - start}ms`)
+    console.log("/merged/tests/post/")
     console.log(h)
     console.log(f)
+    console.log("\n\n")
 })
 req.end()
 
@@ -57,7 +72,11 @@ req = client.request({
     ":path": "/tests/"
 })
 req.on("response", (h, f) => {
+    console.log(`Response time: ${new Date().getTime() - start}ms`)
+    console.log("/tests/")
     console.log(h)
     console.log(f)
+    console.log("\n\n")
 })
+
 req.end()

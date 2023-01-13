@@ -96,35 +96,33 @@ export class Router {
 
     }
 
-    public merge(router: Router) {
+    public merge(router: Router, urlPrefix: string = "") {
 
-        for (let key in Object.keys(router.handlers)) {
-            if (key in this.handlers) {
+        let keys = Object.keys(router.handlers)
+
+        for (let key in keys) {
+
+            let unprefixedKey = keys[key]
+            key = urlPrefix + keys[key]
+
+            if (this.handlers.hasOwnProperty(key)) {
+
                 // Block conflicts
                 delete router.handlers[key]
-                console.log(`Conflict merging "${key}", prioritising parent router. Consider resolving this conflict or merging with a URL prefix using Router.prefixMerge to prevent routing issues.`)
+
+                if (urlPrefix == undefined) {
+                    console.log(`Conflict merging "${key}", prioritising parent router. Consider resolving this conflict or merging with a URL prefix by passing the urlPrefix argument to prevent routing issues.`)
+                } else {
+                    console.log(`Conflict merging "${key}", prioritising parent router. Consider resolving this conflict to prevent routing issues.`)
+                }
+
             } else {
+
                 // Add keys that don't conflict
-                this.handlers[key] = router.handlers[key]
+                this.handlers[key] = router.handlers[unprefixedKey]
+
             }
         }
-
-    }
-
-    public prefixMerge(router: Router, urlPrefix: string) {
-
-        for (let key in Object.keys(router.handlers)) {
-            let prefixKey = urlPrefix + key
-            if (prefixKey in this.handlers) {
-                // Block conflicts
-                delete router.handlers[key]
-                console.log(`Conflict merging "${prefixKey}", prioritising parent router. Consider resolving this conflict to prevent routing issues.`)
-            } else {
-                // Add keys that don't conflict
-                this.handlers[prefixKey] = router.handlers[key]
-            }
-        }
-
     }
 
 }
