@@ -1,3 +1,3 @@
 npx tsc
-mkdir ./dist/lib/assets/
-copy ./src/lib/assets/* ./dist/lib/assets/
+cp -r ./src/lib/assets/ ./dist/lib/
+cp -r ./src/tests/assets/ ./dist/tests/

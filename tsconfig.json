@@ -12,5 +12,6 @@
         "declaration": true,
         "experimentalDecorators": true,
         "skipLibCheck": false,
+        "jsx": "react"
     }
 }

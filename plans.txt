@@ -1,8 +1,0 @@
-Future features:
-
-    Add performance monitoring for served pages
-
-    Add performance monitoring hub
-
-    Add authentication system 
-        Maybe piggyback off an established soloution like Oauth2?

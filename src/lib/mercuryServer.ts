@@ -1,9 +1,12 @@
-import { errorHandlerCtx, Router } from "./router.js"
+import { errorHandlerCtx, MercuryServerOptions, runOptions } from "../types.js"
+import { Router } from "./router.js"
 
 import * as http2 from 'node:http2'
 import * as fs from 'node:fs'
 import { execSync } from 'node:child_process'
 import { cwd } from 'node:process'
+import { MonitorAPI } from "./apis/monitor.js"
+
 
 export class MercuryServer implements http2.Http2SecureServer { 
 
@@ -73,7 +76,10 @@ export class MercuryServer implements http2.Http2SecureServer {
         
         }
 
-        // Remove custom key/value pairs ready to be passed to createSecureServer 
+        let staticPath = options.staticPath
+
+        // Remove custom key/value pairs ready to be passed to createSecureServer
+        delete options.staticPath
         delete options.dev
 
         // Initialises http2.http2SecureServer with createSecureServer function
@@ -113,104 +119,30 @@ export class MercuryServer implements http2.Http2SecureServer {
         this.updateSettings = this.HTTP2.updateSettings
 
         // Adds router to this
-        this.router = new Router()
+        this.router = new Router(this, staticPath)
 
         // Bind listener from router to request event
         // @ts-ignore
         this.HTTP2.on("request", (req, res) => { this.router.routingListener(req, res) })
-
+        this.use(MonitorAPI)
 
     }
 
     // Adds logging to server.listen()
-    public run(options?: runOptions, callback?) {
+    public run(options?: runOptions, callback?: () => void): void {
 
         this.HTTP2.listen(options, callback)
         console.log('Opened server on', this.HTTP2.address())
     
     }
 
-    public serveError(ctx: errorHandlerCtx) {
+    public serveError(ctx: errorHandlerCtx): void {
 
         this.router.errorHandler(ctx)
 
     }
-    
-}
 
-// TYPES
-
-import * as tls from "node:tls"
-
-import * as globalTypes from "../globalTypes"
-import { ListenOptions, AddressInfo } from "net"
-
-
-declare function SNICallbackFn(servername: string, callback: Function): void
-declare function pskCallbackFn(socket: tls.TLSSocket, identity: string) : Buffer | globalTypes.TypedArray | DataView
-
-export declare type MercuryServerOptions = {
-    
-    dev?: boolean,
-    allowHTTP1?: boolean,
-    maxDeflateDynamicTableSize?: number,
-    maxSettings?: number,
-    maxSessionMemory?: number,
-    maxHeaderListPairs?: number,
-    maxOutstandingPings?: number,
-    maxSendHeaderBlockLength?: number,
-    paddingStrategy?: number,
-    maxSessionInvalidFrames?: number,
-    maxSessionRejectedStreams?: number,
-    settings?: globalTypes.http2SettingsObject,
-    origins?: string[],
-    unknownProtocolTimeout?: number,
-    ALPNProtocols?: string[] | Buffer[] | globalTypes.TypedArray[] | DataView[] | Buffer | globalTypes.TypedArray | DataView,
-    clientCertEngine?: string,
-    enableTrace?: boolean,
-    handshakeTimeout?: number,
-    rejectUnauthorized?: boolean,
-    requestCert?: boolean,
-    sessionTimeout?: number,
-    SNICallback?: typeof SNICallbackFn,
-    ticketKeys?: Buffer,
-    pskCallback?: typeof pskCallbackFn,
-    pskIdentityHint?: string,
-    ca?: string | string[] | Buffer | Buffer[],
-    cert?: string | string[] | Buffer | Buffer[],
-    sigalgs?: string,
-    ciphers?: string,
-    crl?: string | string[] | Buffer | Buffer[],
-    dhparam?: string | Buffer,
-    ecdhCurve?: string,
-    honorCipherOrder?: boolean,
-    key?: string | string[] | Buffer | Buffer[] | Object[],
-    privateKeyEngine?: string,
-    privateKeyIdentifier?: string,
-    maxVersion?: string,
-    minVersion?: string,
-    passphrase?: string,
-    pfx?: string | string[] | Buffer | Buffer[] | Object[],
-    secureOptions?: number,
-    secureProtocol?: string,
-    sessionIdContext?: string,
-    allowHalfOpen?: boolean,
-    pauseOnConnect?: boolean,
-    noDelay?: boolean,
-    keepAlive?: boolean,
-    keepAliveInitialDelay?: number
-}
-
-export declare type runOptions = {
-
-    port?: number,
-    host?: string,
-    path?: string,
-    backlog?: number,
-    exclusive?: boolean,
-    readableAll?: boolean,
-    writableAll?: boolean,
-    ipv6Only?: boolean,
-    signal?: AbortSignal
-
+    public use<T extends { new (...args: any[]): {} }>(constructor: T) {
+        this[constructor.constructor.name] = new constructor(this) 
+    }
 }

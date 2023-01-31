@@ -1,0 +1,52 @@
+Add performance monitoring for served pages
+
+Add performance monitoring hub
+
+Add authentication system
+    Maybe piggyback off an established soloution like Oauth2?
+
+Add stream routing to Router
+
+Change Router to work off nested dictionaries for more flexibility with routing
+
+    example:
+
+    this.handlers {
+
+        "static": staticHandler,
+
+        "mercury": {
+
+            "api": {
+
+                // This represents /mercury/api/monitor
+                "monitor": MonitorAPI.handleRequest,
+
+                //This represents /mercury/api/cookies
+                "cookies": CookiesAPI.handleRequest,
+
+                // This represents /mercury/api/
+                "": (ctx) => {
+                    // Respond with a list of possible APIs to access
+                    ...
+                }
+
+            } 
+
+        },
+
+        "your": {
+
+            "routes": {
+
+                "to": {
+
+                    "things": genericHandler
+
+                }
+
+            }
+
+        }
+
+    }

@@ -1,0 +1,81 @@
+.mercury-container {
+    -webkit-filter: blur(0);
+    filter: blur(0);
+    opacity: 1;
+    -webkit-transition: opacity 500ms ease, -webkit-filter 500ms ease;
+    transition: opacity 500ms ease, -webkit-filter 500ms ease;
+    transition: filter 500ms ease, opacity 500ms ease;
+    transition: filter 500ms ease, opacity 500ms ease, -webkit-filter 500ms ease;
+}
+
+.mercury-center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.mercury-inline {
+    width: 100%;
+    align-items: center;
+    align-content: center;
+    align-self: center;
+    display: inline-flex;
+}
+
+.mercury-container.mercury-cookieprompt-active {
+    -webkit-filter: blur(8px);
+    filter: blur(8px);
+    opacity: 1;
+}
+
+.mercury-cookieprompt-wrapper {
+    position: fixed;
+    top: 100vh;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    -webkit-filter: blur(15px);
+    filter: blur(15px);
+    opacity: .01;
+    -webkit-transform: scale(1.2);
+    transform: scale(1.2);
+    overflow: auto;
+    -webkit-transition: opacity 300ms ease 200ms, -webkit-transform 300ms ease 200ms, -webkit-filter 300ms ease 200ms;
+    transition: opacity 300ms ease 200ms, -webkit-transform 300ms ease 200ms, -webkit-filter 300ms ease 200ms;
+    transition: transform 300ms ease 200ms, filter 300ms ease 200ms, opacity 300ms ease 200ms;
+    transition: transform 300ms ease 200ms, filter 300ms ease 200ms, opacity 300ms ease 200ms, -webkit-transform 300ms ease 200ms, -webkit-filter 300ms ease 200ms;
+}
+
+.mercury-cookieprompt-wrapper.mercury-cookieprompt-active {
+    top: 0vh;
+    -webkit-filter: blur(0);
+    filter: blur(0);
+    opacity: 1;
+    -webkit-transform: scale(1);
+    transform: scale(1);
+}
+
+.mercury-cookieprompt {
+    top: 25vh;
+    position: relative;
+    background: #778899;
+    padding: 20px;
+    overflow: scroll;
+    height: 50%;
+    width: 75%;
+    border-radius: 10px;
+    box-shadow: 0px 0px 100px rgba(0, 0, 0, 0.4);
+    margin: 0 auto;
+    align-content: center;
+}
+
+.mercury-cookie-button {
+    padding: 10px;
+    border-radius: 1000px;
+    border: 0;
+    background-color: hsl(221, 100%, 60%);
+    width: 50%;
+}

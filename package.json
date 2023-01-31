@@ -5,13 +5,19 @@
   "type": "module",
   "main": "dist/Mercury.js",
   "scripts": {
-    "test": "npm run build && node dist/server.test.js",
-    "build": "build.sh"
+    "test": "npm run build && node dist/tests/server.test.js",
+    "build": "./build.sh"
   },
   "author": "authors.txt",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^18.11.17",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
     "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }

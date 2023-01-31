@@ -1,5 +1,9 @@
+import { routeHandlerCtx } from "../types.js"
+
 import * as http2 from "node:http2"
 import * as fs from "node:fs"
+import * as react from "react"
+import * as reactDOMServer from "react-dom/server"
 
 export class ResponseConstructor {
 
@@ -28,24 +32,64 @@ export class ResponseConstructor {
         this.headers['Set-Cookie'] = cookieArray
 
     }
+
+    public serveReact(ctx: routeHandlerCtx, node: react.ReactNode, code?: number, streamRes?: boolean): void {
+
+        code = code ?? 200
+        streamRes = streamRes ?? true
+        let headers = this.headers
+
+        const stream = reactDOMServer.renderToPipeableStream(
+            node,
+            {
+                onShellReady() {
+                    if (streamRes) {
+                        ctx.res.writeHead(code, headers)
+                        stream.pipe(ctx.res)
+                    }
+                },
+                
+                onShellError(error) {
+                    console.log(error)
+                },
+
+                onAllReady() {
+                    if (!streamRes) {
+                        ctx.res.writeHead(code, headers)
+                        stream.pipe(ctx.res)
+                    }
+                },
+
+                onError(err) {
+                    console.error(err)
+                },
+            }
+        )
+
+    }
     
-    public serveFile(res: http2.Http2ServerResponse, fp: string): void {
-        
+    public serveFile(ctx: routeHandlerCtx, fp: string): void {
+     
         fs.readFile(fp, (err, data) => {
-
-            if (err) { throw err }
-            this.serve(res, data.toString())
-
+            if (err) {
+                if (err.code === "ENOENT") {
+                    this.serve(ctx, "An error occurred.\n\n400: Bad Request\n  This asset requested does not exist.", 400)
+                } else {
+                    this.serve(ctx, "An error occurred.\n\n500: Internal Error\n  The server encountered an unexpected condition \
+                    which prevented it from fulfilling the request.", 500)
+                }
+            } else {
+                this.serve(ctx, data.toString())
+            }
         })
 
     }
 
-    public serve(res: http2.Http2ServerResponse, data: string, code: number = 200): void {
+    public serve(ctx: routeHandlerCtx, data: string, code: number = 200): void {
 
-        res.writeHead(code, this.headers)
-        res.write(data)
-        res.end()
-
+        ctx.res.writeHead(code, this.headers)
+        ctx.res.write(data)
+        ctx.res.end()
     }
 
     public addHeaders(headers: http2.OutgoingHttpHeaders, prioritiseArg: boolean = false): void {

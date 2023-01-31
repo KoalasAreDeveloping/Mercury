@@ -4,4 +4,4 @@ Mercury is a web framework built on Typescript and NodeJS designed to be simple 
 
 For contributing information see contribute.md.
 
-For plans, ideas and goals see plans.txt.
+For goals see todo.txt.
