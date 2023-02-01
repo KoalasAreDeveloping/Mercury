@@ -19,8 +19,9 @@ export class Router {
     errorHandler: (ctx: errorHandlerCtx) => void
     serviceFiles: Object
     staticPath: string
+    server: MercuryServer
     
-    constructor(server?: MercuryServer, staticPath?: string) {
+    constructor(server: MercuryServer, staticPath?: string) {
 
         this.handlers = {}
 
@@ -48,6 +49,8 @@ export class Router {
         }
 
         this.staticPath = staticPath || "static"
+
+        this.server = server
 
     }
     

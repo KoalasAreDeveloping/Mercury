@@ -12,7 +12,7 @@ const config = {
 }
 
 const server = new Mercury.MercuryServer({dev: true, staticPath: "."})
-const router2 = new Mercury.Router()
+const router2 = new Mercury.Router(server)
 class routes {
 
     @server.router.route("/tests/get/")
