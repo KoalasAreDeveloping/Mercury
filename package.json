@@ -6,7 +6,7 @@
   "main": "dist/Mercury.js",
   "scripts": {
     "test": "npm run build && node dist/tests/server.test.js",
-    "build": "./build.sh"
+    "build": "npx tsc && ./build.sh"
   },
   "author": "authors.txt",
   "license": "MIT",
