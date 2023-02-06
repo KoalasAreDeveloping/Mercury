@@ -3,9 +3,11 @@ import { performance } from "node:perf_hooks"
 import { randomUUID } from "node:crypto"
 
 import * as fs from "node:fs"
+import { cwd } from "node:process"
 
 import { MercuryServer } from "../mercuryServer.js"
 import { routeHandlerCtx } from "../../types.js"
+
 
 export class MonitorAPI {
 
@@ -17,16 +19,30 @@ export class MonitorAPI {
         this.server = server
 
         // Generate unique file name.
-        this.logFilepath = `logs/MONITOR-${randomUUID()}.mercury.log`
+        this.logFilepath = `${cwd}logs/MONITOR-${randomUUID()}.mercury.log`
 
         // Current is the current log object.
         this.current = { nodeTiming: performance.nodeTiming.toJSON(), events: [] }
 
+  
+        fs.access(`${cwd()}/logs`, (error) => {
+        
+            // Check if the given directory already exists or not
+            if (error) {
+                // If current directory does not exist then create it
+                fs.mkdir(`${cwd()}/logs`, (error) => {
+                    if (error) {
+                        console.log(error)
+                    }
+                })
+            }
+        })
+
         // Update file every hour and on exits
-        process.on("beforeExit", this.updateEventLogFile)
+        process.on("beforeExit", (code) => { this.updateEventLogFile })
         setInterval(this.updateEventLogFile, 3600000) 
 
-        this.server.router.routeFn("", (ctx: routeHandlerCtx) => { 
+        this.server.router.routeFn("/mercury/api/monitor/logEvent/", (ctx: routeHandlerCtx) => { 
             
             let eventJSON: string
 
@@ -79,7 +95,8 @@ export class MonitorAPI {
         let start = performance.now()
 
         // Decorator
-        return (target: Object, propertyKey: string, descriptor: PropertyDescriptor) => {
+        var self = this
+        return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
 
             // Store method
             var originalMethod = descriptor.value
@@ -92,12 +109,37 @@ export class MonitorAPI {
                 // Get end time
                 end = performance.now()
                 // log event
-                this.logEvent({ ...eventDetails, eventName: eventName, event: "CALL", eventDuration: end - start, timestamp: timestamp })
+                self.logEvent({ ...eventDetails, eventName: eventName, event: "CALL", eventDuration: end - start, timestamp: timestamp })
 
                 return val
             }
 
             return descriptor
+        }
+
+    }
+
+    public wrapEvent<T extends Function>(eventFn: T, _this: T, eventName: string, eventDetails?: object) {
+
+        let timestamp = Date.now()
+        let end: number
+        // Get start tiem
+        let start = performance.now()
+
+        // Decorator
+        var self = this
+        return function (...args: any[]) {
+
+            // Call method
+
+            let val = eventFn.apply(_this, args)
+            // Get end time
+            end = performance.now()
+            // log event
+            self.logEvent({ ...eventDetails, eventName: eventName, event: "CALL", eventDuration: end - start, timestamp: timestamp })
+
+            return val
+            
         }
 
     }

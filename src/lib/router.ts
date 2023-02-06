@@ -72,7 +72,7 @@ export class Router {
             if (route.split("/")[1] == "static") {
 
                 // Send static file
-                let response = new ResponseConstructor
+                let response = new ResponseConstructor(this.server)
                 response.headers["content-type"] = req.headers["content-type"] || "*/*"
                 // Ensure that static path is not escaped.
                 if (urlObj.searchParams.get("file").indexOf("..") == -1) {
@@ -86,7 +86,7 @@ export class Router {
 
                 if (route.split("/")[2] == "services") {
 
-                    let response = new ResponseConstructor
+                    let response = new ResponseConstructor(this.server)
                     response.headers["content-type"] = "text/javascript"
                     route = route.split("/").splice(3).join("/")
                     if (this.serviceFiles[route.substring(0, route.length - 1)] != undefined) {
@@ -98,7 +98,7 @@ export class Router {
 
                 } else if (route.split("/")[2] == "assets") { 
 
-                    let response = new ResponseConstructor
+                    let response = new ResponseConstructor(this.server)
 
                     switch (route.split("/")[3]) {
 
@@ -109,9 +109,19 @@ export class Router {
 
                     }
 
-                }  else {
-                    //TODO: create builtin route routing handler for APIs
-                    this.errorHandler({ ...ctx, code: 501 })
+                } else {
+
+                    try { 
+
+                        // Pass request context object to route handler if avaliable
+                        this.handlers[route](ctx)
+
+                    } catch {
+
+                        //TODO: create builtin route routing handler for APIs
+                        this.errorHandler({ ...ctx, code: 501 })
+                        
+                    }
                 }
 
             } else {

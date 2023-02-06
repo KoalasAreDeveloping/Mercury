@@ -45,6 +45,9 @@ export class MercuryServer implements http2.Http2SecureServer {
     eventNames: any
     setTimeout: any
     updateSettings: any
+
+    // To avoid errors when accessing properties
+    [key: string | number | symbol]: any
     
     constructor(options: MercuryServerOptions) {
 
@@ -120,11 +123,22 @@ export class MercuryServer implements http2.Http2SecureServer {
 
         // Adds router to this
         this.router = new Router(this, staticPath)
+        this.use(MonitorAPI)
+
+
+
+        let routerMethods = Reflect.ownKeys(Object.getPrototypeOf(this.router))
+        for (let i in routerMethods) { 
+            let methodName = routerMethods[i]
+            if (methodName != "constructor") {
+                this.router[methodName] = this.MonitorAPI.wrapEvent(this.router[methodName], this.router, methodName)
+            } else {
+                continue
+            }
+        }
 
         // Bind listener from router to request event
-        // @ts-ignore
         this.HTTP2.on("request", (req, res) => { this.router.routingListener(req, res) })
-        this.use(MonitorAPI)
 
     }
 
@@ -142,7 +156,7 @@ export class MercuryServer implements http2.Http2SecureServer {
 
     }
 
-    public use<T extends { new (...args: any[]): {} }>(constructor: T) {
-        this[constructor.constructor.name] = new constructor(this) 
+    public use<T extends { new(...args: any[]): {} }>(constructor: T) {
+        this[constructor.name] = new constructor(this) 
     }
 }

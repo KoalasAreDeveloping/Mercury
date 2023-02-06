@@ -1,4 +1,5 @@
 import { routeHandlerCtx } from "../types.js"
+import { MercuryServer } from "./mercuryServer.js"
 
 import * as http2 from "node:http2"
 import * as fs from "node:fs"
@@ -7,29 +8,61 @@ import * as reactDOMServer from "react-dom/server"
 
 export class ResponseConstructor {
 
+    server: MercuryServer
+    defaultHeaders: http2.OutgoingHttpHeaders
     headers: http2.OutgoingHttpHeaders
 
-    constructor() {
-        this.headers = {}
+    constructor(server: MercuryServer, defaultHeaders: http2.OutgoingHttpHeaders = {}) {
+        this.server = server
+        this.defaultHeaders = defaultHeaders
     }
 
-    public setCookies(cookies: Object): void {
+    public setCookies(ctx: routeHandlerCtx, cookies: Object): void {
         
-        // Get a list of keys and create an array to store cookies in.
-        let keys = Object.keys(cookies)
-        let cookieArray = []
+        let getCookiePolicy = () => {
 
-        for (let key in keys) {
+            try {
+                let name = 'allowCookies='
+                let ca = ctx.req.headers.cookie.split(';')
+        
+                for (let i = 0; i < ca.length; i++) {
+                    let c = ca[i]
+                    while (c.charAt(0) == ' ') {
+                        c = c.substring(1)
+                    }
+                    if (c.indexOf(name) == 0) {
+                        return c.substring(name.length, c.length)
+                    }
+                }
 
-            // For loop makes key an index in the array, so the value we want is collected from the array.
-            key = keys[key]
-            // Add cookies to the array in the Set-Cookie header format
-            cookieArray.push(`${key}=${cookies[key]}`)
+                return ''
 
+            } catch {
+
+                return ''
+
+            }
         }
 
-        // Set Set-Cookie header to the cookies created.
-        this.headers['Set-Cookie'] = cookieArray
+        if (Boolean(getCookiePolicy())) {
+            // Get a list of keys and create an array to store cookies in.
+            let keys = Object.keys(cookies)
+            let cookieArray = []
+
+            for (let key in keys) {
+
+                // For loop makes key an index in the array, so the value we want is collected from the array.
+                key = keys[key]
+                // Add cookies to the array in the Set-Cookie header format
+                cookieArray.push(`${key}=${cookies[key]}`)
+
+            }
+
+            // Set Set-Cookie header to the cookies created.
+            this.headers['Set-Cookie'] = cookieArray
+        } else {
+            console.log(`Failure to add cookie (client does not accept cookies)`)
+        }
 
     }
 
@@ -108,3 +141,24 @@ export class ResponseConstructor {
     }
 
 }
+
+interface IResponseConstructor {
+
+    headers: http2.OutgoingHttpHeaders
+
+    constructor()
+
+    setCookies(cookies: Object): void
+    serveReact(ctx: routeHandlerCtx, node: react.ReactNode, code?: number, streamRes?: boolean): void     
+    serveFile(ctx: routeHandlerCtx, fp: string): void
+    serve(ctx: routeHandlerCtx, data: string, code: number): void
+    addHeaders(headers: http2.OutgoingHttpHeaders, prioritiseArg: boolean): void
+}
+
+/*         
+        "X-XSS-Protection" = "1; mode=block"
+        'Strict-Transport-Security' = 'max-age=31536000; includeSubDomains'
+        'Content-Security-Policy' = "default-src 'self' /static https://*"
+        'X-Content-Type-Options' = 'nosniff'
+        'X-Frame-Options' = 'SAMEORIGIN'
+ */
