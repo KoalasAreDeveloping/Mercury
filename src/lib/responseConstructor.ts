@@ -14,7 +14,18 @@ export class ResponseConstructor {
 
     constructor(server: MercuryServer, defaultHeaders: http2.OutgoingHttpHeaders = {}) {
         this.server = server
-        this.defaultHeaders = defaultHeaders
+        
+        if (defaultHeaders != undefined) {
+            this.defaultHeaders = defaultHeaders
+        } else {
+            defaultHeaders = {
+                "X-XSS-Protection": "1; mode=block",
+                'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+                'Content-Security-Policy': "default-src 'self' /static https://*",
+                'X-Content-Type-Options': 'nosniff',
+                'X-Frame-Options': 'SAMEORIGIN'
+            }
+        }
     }
 
     public setCookies(ctx: routeHandlerCtx, cookies: Object): void {
@@ -141,24 +152,3 @@ export class ResponseConstructor {
     }
 
 }
-
-interface IResponseConstructor {
-
-    headers: http2.OutgoingHttpHeaders
-
-    constructor()
-
-    setCookies(cookies: Object): void
-    serveReact(ctx: routeHandlerCtx, node: react.ReactNode, code?: number, streamRes?: boolean): void     
-    serveFile(ctx: routeHandlerCtx, fp: string): void
-    serve(ctx: routeHandlerCtx, data: string, code: number): void
-    addHeaders(headers: http2.OutgoingHttpHeaders, prioritiseArg: boolean): void
-}
-
-/*         
-        "X-XSS-Protection" = "1; mode=block"
-        'Strict-Transport-Security' = 'max-age=31536000; includeSubDomains'
-        'Content-Security-Policy' = "default-src 'self' /static https://*"
-        'X-Content-Type-Options' = 'nosniff'
-        'X-Frame-Options' = 'SAMEORIGIN'
- */
