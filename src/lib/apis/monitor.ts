@@ -39,7 +39,7 @@ export class MonitorAPI {
         })
 
         // Update file every hour and on exits
-        process.on("beforeExit", (code) => { this.updateEventLogFile })
+        process.on("exit", (code) => { this.updateEventLogFile() })
         setInterval(this.updateEventLogFile, 3600000) 
 
         this.server.router.routeFn("/mercury/api/monitor/logEvent/", (ctx: routeHandlerCtx) => { 

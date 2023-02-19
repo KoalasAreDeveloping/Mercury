@@ -7,7 +7,7 @@ Add authentication system
 
 Add stream routing to Router
 
-Add server performance monitoring without requiring decorator 
+Improve tests
 
 Change Router to work off nested dictionaries for more flexibility with routing
 
