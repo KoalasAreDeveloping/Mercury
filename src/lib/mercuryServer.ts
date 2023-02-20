@@ -125,8 +125,6 @@ export class MercuryServer implements http2.Http2SecureServer {
         this.router = new Router(this, staticPath)
         this.use(MonitorAPI)
 
-
-
         let routerMethods = Reflect.ownKeys(Object.getPrototypeOf(this.router))
         for (let i in routerMethods) { 
             let methodName = routerMethods[i]
@@ -157,6 +155,6 @@ export class MercuryServer implements http2.Http2SecureServer {
     }
 
     public use<T extends { new(...args: any[]): {} }>(constructor: T) {
-        this[constructor.name] = new constructor(this) 
+        this[constructor.name] = new constructor(this)
     }
 }

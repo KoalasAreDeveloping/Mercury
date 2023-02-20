@@ -48,3 +48,10 @@ export interface eventObject {
     [key: string]: any
 
 }
+
+export interface MonitorSessionObj {
+
+    nodeTiming: Object,
+    events: Array<Object>
+
+}

@@ -6,24 +6,23 @@ import * as fs from "node:fs"
 import { cwd } from "node:process"
 
 import { MercuryServer } from "../mercuryServer.js"
-import { routeHandlerCtx, eventObject } from "../../types.js"
+import { routeHandlerCtx, eventObject, MonitorSessionObj } from "../../types.js"
 
 
 export class MonitorAPI {
 
     logFilepath: string
-    current: Object
+    current: MonitorSessionObj
     server: MercuryServer
 
     constructor(server: MercuryServer) {
         this.server = server
 
-        // Generate unique file name.
-        this.logFilepath = `${cwd()}/logs/MONITOR-${randomUUID()}.mercury.log`
-
         // Current is the current log object.
         this.current = { nodeTiming: performance.nodeTiming.toJSON(), events: [] }
 
+        // Generate unique file name and ID.
+        this.logFilepath = `${cwd()}/logs/MONITOR-${randomUUID()}.mercury.log`
   
         try {
             fs.accessSync(`${cwd()}/logs`)
@@ -43,17 +42,17 @@ export class MonitorAPI {
 
         process.on("SIGINT", () => {
             this.updateEventLogFile()
-            process.exit()
+            process.exit(1)
         })
 
         process.on("SIGQUIT", () => {
             this.updateEventLogFile()
-            process.exit()
+            process.exit(1)
         })
 
         process.on("SIGTERM", () => {
             this.updateEventLogFile()
-            process.exit()
+            process.exit(1)
         })
 
         setInterval(() => { this.updateEventLogFile() }, 3600000) 
@@ -89,10 +88,10 @@ export class MonitorAPI {
         }
 
         // Add new data as timestamp
-        logJSON = logJSON[Date.now()] = this.current
+        logJSON[Date.now().toString()] = this.current
 
         // Reset current
-        this.current = {}
+        this.current = { nodeTiming: performance.nodeTiming.toJSON(), events: [] }
 
         fs.writeFileSync(this.logFilepath, JSON.stringify(logJSON, undefined, 4))
 
