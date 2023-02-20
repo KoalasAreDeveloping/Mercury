@@ -6,7 +6,7 @@ import * as fs from "node:fs"
 import { cwd } from "node:process"
 
 import { MercuryServer } from "../mercuryServer.js"
-import { routeHandlerCtx } from "../../types.js"
+import { routeHandlerCtx, eventObject } from "../../types.js"
 
 
 export class MonitorAPI {
@@ -19,28 +19,44 @@ export class MonitorAPI {
         this.server = server
 
         // Generate unique file name.
-        this.logFilepath = `${cwd}logs/MONITOR-${randomUUID()}.mercury.log`
+        this.logFilepath = `${cwd()}/logs/MONITOR-${randomUUID()}.mercury.log`
 
         // Current is the current log object.
         this.current = { nodeTiming: performance.nodeTiming.toJSON(), events: [] }
 
   
-        fs.access(`${cwd()}/logs`, (error) => {
-        
-            // Check if the given directory already exists or not
-            if (error) {
-                // If current directory does not exist then create it
-                fs.mkdir(`${cwd()}/logs`, (error) => {
-                    if (error) {
-                        console.log(error)
-                    }
-                })
-            }
-        })
+        try {
+            fs.accessSync(`${cwd()}/logs`)
+        } catch (e) { 
+            // If directory does not exist then create it
+            fs.mkdirSync(`${cwd()}/logs`)
+        }
+
+        // Create file.
+        fs.createWriteStream(this.logFilepath).end()
 
         // Update file every hour and on exits
-        process.on("exit", (code) => { this.updateEventLogFile() })
-        setInterval(this.updateEventLogFile, 3600000) 
+        process.on("exit", (code) => {
+            this.updateEventLogFile()
+            process.exit(code)
+        })
+
+        process.on("SIGINT", () => {
+            this.updateEventLogFile()
+            process.exit()
+        })
+
+        process.on("SIGQUIT", () => {
+            this.updateEventLogFile()
+            process.exit()
+        })
+
+        process.on("SIGTERM", () => {
+            this.updateEventLogFile()
+            process.exit()
+        })
+
+        setInterval(() => { this.updateEventLogFile() }, 3600000) 
 
         this.server.router.routeFn("/mercury/api/monitor/logEvent/", (ctx: routeHandlerCtx) => { 
             
@@ -67,7 +83,7 @@ export class MonitorAPI {
         let logJSON: Object
 
         try {
-            logJSON = JSON.parse(String(fs.readFileSync(this.logFilepath)))
+            logJSON = JSON.parse(fs.readFileSync(this.logFilepath, "utf-8"))
         } catch (e) { 
             logJSON = {}
         }
@@ -78,9 +94,8 @@ export class MonitorAPI {
         // Reset current
         this.current = {}
 
-        fs.writeFile(this.logFilepath, JSON.stringify(logJSON), (err) => {
-            console.log(err)
-        })
+        fs.writeFileSync(this.logFilepath, JSON.stringify(logJSON, undefined, 4))
+
     }
 
     public logEvent(event: eventObject) {
@@ -143,15 +158,5 @@ export class MonitorAPI {
         }
 
     }
-
-}
-
-export interface eventObject {
-
-    eventName: string,
-    event: string,
-    eventDuration: number,
-    timestamp: number,
-    [key: string]: any
 
 }

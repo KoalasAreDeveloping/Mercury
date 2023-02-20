@@ -38,3 +38,13 @@ export interface runOptions {
     signal?: AbortSignal
 
 }
+
+export interface eventObject {
+
+    eventName: string,
+    event: string,
+    eventDuration: number,
+    timestamp: number,
+    [key: string]: any
+
+}
