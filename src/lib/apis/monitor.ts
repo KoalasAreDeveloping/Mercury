@@ -57,7 +57,7 @@ export class MonitorAPI {
 
         setInterval(() => { this.updateEventLogFile() }, 3600000) 
 
-        this.server.router.routeFn("/mercury/api/monitor/logEvent/", (ctx: routeHandlerCtx) => { 
+        this.server.router.routeFn("/mercury/api/monitor/logEvent/", "POST", (ctx: routeHandlerCtx) => { 
             
             let eventJSON: string
 

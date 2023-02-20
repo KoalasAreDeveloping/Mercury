@@ -9,19 +9,18 @@ import * as reactDOMServer from "react-dom/server"
 export class ResponseConstructor {
 
     server: MercuryServer
-    defaultHeaders: http2.OutgoingHttpHeaders
     headers: http2.OutgoingHttpHeaders
 
     constructor(server: MercuryServer, defaultHeaders: http2.OutgoingHttpHeaders = {}) {
         this.server = server
         
-        if (defaultHeaders != undefined) {
-            this.defaultHeaders = defaultHeaders
+        if (defaultHeaders == undefined) {
+            this.headers = defaultHeaders
         } else {
-            defaultHeaders = {
+            this.headers = {
                 "X-XSS-Protection": "1; mode=block",
                 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-                'Content-Security-Policy': "default-src 'self' /static https://*",
+                'Content-Security-Policy': "default-src 'self' 'unsafe-inline' https://*",
                 'X-Content-Type-Options': 'nosniff',
                 'X-Frame-Options': 'SAMEORIGIN'
             }
@@ -114,6 +113,8 @@ export class ResponseConstructor {
     
     public serveFile(ctx: routeHandlerCtx, fp: string): void {
      
+        console.log(fp)
+
         fs.readFile(fp, (err, data) => {
             if (err) {
                 if (err.code === "ENOENT") {
@@ -122,6 +123,7 @@ export class ResponseConstructor {
                     this.serve(ctx, "An error occurred.\n\n500: Internal Error\n  The server encountered an unexpected condition \
                     which prevented it from fulfilling the request.", 500)
                 }
+                console.log(err)
             } else {
                 this.serve(ctx, data.toString())
             }

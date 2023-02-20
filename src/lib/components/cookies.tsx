@@ -5,7 +5,7 @@ export class CookiePrompt extends react.Component {
     render() {
         return (
           <>
-            <script src="/mercury/services/cookies" />
+            <script src="/mercury/services/?service=cookies" />
             <div className="mercury-cookieprompt-wrapper">
                 <div className="mercury-cookieprompt">
                     <div className="mercury-center">

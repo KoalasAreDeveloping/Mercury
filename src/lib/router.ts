@@ -5,6 +5,7 @@ import { errorHandlerCtx, routeHandlerCtx } from "../types.js"
 
 import * as url from "node:url"
 import * as http2 from "node:http2"
+import lodash from "lodash"
 
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
@@ -45,15 +46,56 @@ export class Router {
     
         this.serviceFiles = {
             "cookies": "cookies.js",
-            "sauron": "sauron.js",
         }
 
         this.staticPath = staticPath || "static"
 
         this.server = server
 
-    }
+        this.routeFn("/static/", "GET", (ctx: routeHandlerCtx) => {
+
+            let response = new ResponseConstructor(this.server)
+
+            response.headers["content-type"] = ctx.req.headers["content-type"] || "*/*"
+
+            // Ensure that static path is not escaped.
+            if (ctx.url.searchParams.get("file").indexOf("..") == -1) {
+                response.serveFile(ctx, `${this.staticPath}/${ctx.url.searchParams.get("file")}`)
+            } else { 
+                this.errorHandler({ ...ctx, code: 403 })
+            }
     
+        })
+
+        this.routeFn("/mercury/services/", "GET", (ctx: routeHandlerCtx) => {
+
+            let response = new ResponseConstructor(this.server)
+            response.headers["content-type"] = "text/javascript"
+
+            // Ensure that service path is not escaped or traversed.
+            if (ctx.url.searchParams.get("service").indexOf("/") == -1) {
+                try {
+                    response.serveFile(ctx, `${__dirname}/services/${this.serviceFiles[ctx.url.searchParams.get("service")]}`)
+                } catch (e) {
+                    this.errorHandler({ ...ctx, code: 404 })
+                }
+            } else { 
+                this.errorHandler({ ...ctx, code: 403 })
+            }
+    
+        })
+
+        this.routeFn("/mercury/assets/css/", "GET", (ctx: routeHandlerCtx) => {
+
+            let response = new ResponseConstructor(this.server)
+            response.headers["content-type"] = "text/css"
+            response.serveFile(ctx, `${__dirname}/assets/mercury.css`)
+
+        })
+
+    }
+
+
     // Routes requests to handlers.
     public routingListener(req: http2.Http2ServerRequest, res: http2.Http2ServerResponse): any {
 
@@ -68,82 +110,29 @@ export class Router {
 
         try {
 
-            // Check if route is requesting a static file, which can be found in the static directory.
-            if (route.split("/")[1] == "static") {
+            // Get handler using Lodash.
+            let handler = lodash.get(this.handlers, route)
 
-                // Send static file
-                let response = new ResponseConstructor(this.server)
-                response.headers["content-type"] = req.headers["content-type"] || "*/*"
-                // Ensure that static path is not escaped.
-                if (urlObj.searchParams.get("file").indexOf("..") == -1) {
-                    response.serveFile(ctx, `${this.staticPath}/${urlObj.searchParams.get("file")}`)
-                } else { 
-                    this.errorHandler({ ...ctx, code: 403 })
-                }
-                    
-                // Check if route is requesting a builtin webpage/resource
-            } else if (route.split("/")[1] == "mercury") {
-
-                if (route.split("/")[2] == "services") {
-
-                    let response = new ResponseConstructor(this.server)
-                    response.headers["content-type"] = "text/javascript"
-                    route = route.split("/").splice(3).join("/")
-                    if (this.serviceFiles[route.substring(0, route.length - 1)] != undefined) {
-                        let file = this.serviceFiles[route.substring(0, route.length - 1)]
-                        response.serveFile(ctx, `${__dirname}/services/${file}`)
-                    } else {
-                        throw new Error(`Service ${route.substring(0, route.length - 1)} does not exist.`)
-                    }
-
-                } else if (route.split("/")[2] == "assets") { 
-
-                    let response = new ResponseConstructor(this.server)
-
-                    switch (route.split("/")[3]) {
-
-                        case "css": {
-                            response.headers["content-type"] = "text/css"
-                            response.serveFile(ctx, `${__dirname}/assets/mercury.css`)
-                        }
-
-                    }
-
-                } else {
-
-                    try { 
-
-                        // Pass request context object to route handler if avaliable
-                        this.handlers[route](ctx)
-
-                    } catch {
-
-                        //TODO: create builtin route routing handler for APIs
-                        this.errorHandler({ ...ctx, code: 501 })
-                        
-                    }
-                }
-
-            } else {
-                // Pass request context object to route handler if avaliable
-                this.handlers[route](ctx)
-            }
+            // Call handler for method
+            handler[req.method.toUpperCase()](ctx)
 
         } catch (e) {
             this.errorHandler({ ...ctx, code: 404 })
         }
     }
     
-    public route(route: string) {
+    public route(route: string, method: string) {
 
         // Prepare route
-        route = prepareRoute(route)
+        let _route = prepareRoute(route)
+        _route.push(method.toUpperCase())
 
         // Decorator
         return (target: Object, propertyKey: string, descriptor: PropertyDescriptor) => { 
             // Add to handlers
             if (descriptor.value != undefined) {
-                this.handlers[route] = descriptor.value
+                // Set handler with Lodash.
+                lodash.set(this.handlers, _route, descriptor.value)
             } else {
                 throw new Error(`Error creating route handler for ${route}, handler (${target}.${propertyKey}) does have a value.`)
             }
@@ -151,43 +140,31 @@ export class Router {
 
     }
 
-    public routeFn(route: string, func: Function) {
+    public routeFn(route: string, method: string, func: Function) {
 
         // Prepare route
-        route = prepareRoute(route)
+        let _route = prepareRoute(route)
+        _route.push(method.toUpperCase())
 
-        // Add to handlers
-        this.handlers[route] = func
+        // Set handler with Lodash.
+        lodash.set(this.handlers, _route, func)
 
     }
 
-    public merge(router: Router, urlPrefix: string = "") {
+    public merge(router: Router, urlPrefix?: string) {
 
-        let keys = Object.keys(router.handlers)
+        if (urlPrefix == undefined) {
 
-        for (let key in keys) {
+            // Merge with Lodash, prioritising this other router.
+            this.handlers = lodash.merge(router.handlers, this.handlers)
+            
+        } else {
 
-            let unprefixedKey = keys[key]
-            key = urlPrefix + keys[key]
+            // Add router.handlers to this.handlers under prefix
+            this.handlers[""][urlPrefix] = router.handlers
 
-            if (this.handlers.hasOwnProperty(key)) {
-
-                // Block conflicts
-                delete router.handlers[key]
-
-                if (urlPrefix == undefined) {
-                    console.log(`Conflict merging "${key}", prioritising parent router. Consider resolving this conflict or merging with a URL prefix by passing the urlPrefix argument to prevent routing issues.`)
-                } else {
-                    console.log(`Conflict merging "${key}", prioritising parent router. Consider resolving this conflict to prevent routing issues.`)
-                }
-
-            } else {
-
-                // Add keys that don't conflict
-                this.handlers[key] = router.handlers[unprefixedKey]
-
-            }
         }
+
     }
 
 }

@@ -14,7 +14,7 @@ const config = {
 const server = new Mercury.MercuryServer({ dev: true, staticPath: "." });
 const router2 = new Mercury.Router(server);
 class routes {
-    @server.router.route("/tests/get/")
+    @server.router.route("/tests/get/", "GET")
     public getTest(ctx) {
         let response = new Mercury.ResponseConstructor(server);
         response.setCookies(ctx, { test: "Hello World!" });
@@ -22,7 +22,7 @@ class routes {
         response.serveFile(ctx, "./dist/tests/assets/test.html");
     }
 
-    @server.router.route("/tests/get/react/")
+    @server.router.route("/tests/get/react/", "GET")
     public ReactTest(ctx) {
         let response = new Mercury.ResponseConstructor(server);
         response.setCookies(ctx, { test: "Hello World!" });
@@ -30,7 +30,7 @@ class routes {
         response.serveReact(ctx, react.createElement(TestComponent));
     }
 
-    @router2.route("/tests/get/")
+    @router2.route("/tests/get/", "GET")
     public MergeGetTest(ctx) {
         let response = new Mercury.ResponseConstructor(server);
         response.setCookies(ctx, { test: "Hello World!" });
@@ -40,7 +40,7 @@ class routes {
 }
 let mergeStart = performance.now();
 
-server.router.merge(router2, "/merged");
+server.router.merge(router2, "merged");
 
 console.log(`Merged in ${performance.now() - mergeStart}ms`);
 
