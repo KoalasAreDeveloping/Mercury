@@ -112,8 +112,6 @@ export class ResponseConstructor {
     }
     
     public serveFile(ctx: routeHandlerCtx, fp: string): void {
-     
-        console.log(fp)
 
         fs.readFile(fp, (err, data) => {
             if (err) {

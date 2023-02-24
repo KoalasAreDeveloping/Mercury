@@ -43,10 +43,6 @@ export class Router {
             ctx.res.write(`An error occurred.\n\n${ctx.code}: ${this.errorCodes[ctx.code].short}\n  ${this.errorCodes[ctx.code].long}`)
             ctx.res.end()
         }
-    
-        this.serviceFiles = {
-            "cookies": "cookies.js",
-        }
 
         this.staticPath = staticPath || "static"
 
@@ -75,7 +71,7 @@ export class Router {
             // Ensure that service path is not escaped or traversed.
             if (ctx.url.searchParams.get("service").indexOf("/") == -1) {
                 try {
-                    response.serveFile(ctx, `${__dirname}/services/${this.serviceFiles[ctx.url.searchParams.get("service")]}`)
+                    response.serveFile(ctx, `${__dirname}/services/${ctx.url.searchParams.get("service")}.js`)
                 } catch (e) {
                     this.errorHandler({ ...ctx, code: 404 })
                 }
