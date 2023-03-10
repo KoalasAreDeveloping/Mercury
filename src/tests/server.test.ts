@@ -42,13 +42,13 @@ let mergeStart = performance.now();
 
 server.router.merge(router2, "merged");
 
-console.log(`Merged in ${performance.now() - mergeStart}ms`);
+console.log(`Merged in ${performance.now() - mergeStart}ms\n`);
 
 let serverStart = performance.now();
 
 server.run(config);
 
-console.log(`Server started in ${performance.now() - serverStart}ms`);
+console.log(`Server started in ${performance.now() - serverStart}ms\n`);
 
 const client = http2.connect(`https://${config.host}:${config.port}/`, {
     ca: fs.readFileSync("localhost-cert.pem"),

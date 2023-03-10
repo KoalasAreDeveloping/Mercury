@@ -21,6 +21,7 @@
   "dependencies": {
     "lodash": "^4.17.21",
     "pg": "^8.9.0",
+    "pgtools": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }

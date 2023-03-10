@@ -154,7 +154,12 @@ export class MercuryServer implements http2.Http2SecureServer {
 
     }
 
-    public use<T extends { new(...args: any[]): {} }>(constructor: T) {
-        this[constructor.name] = new constructor(this)
+    public use<T extends { new(...args: any[]): {} }>(constructor: T, args?: any[]): void {
+        if (args === undefined) { 
+            this[constructor.name] = new constructor(this)
+        }
+        else {
+            this[constructor.name] = new constructor(this, ...args)
+        }
     }
 }

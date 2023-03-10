@@ -149,15 +149,19 @@ export class Router {
 
     public merge(router: Router, urlPrefix?: string) {
 
-        if (urlPrefix == undefined) {
+        var _handlers = router.handlers[""]
+
+        // Remove builtin routes
+        _handlers = lodash.omit(_handlers, ["static", "mercury"])
+
+        if (urlPrefix === undefined) {
 
             // Merge with Lodash, prioritising this other router.
-            this.handlers = lodash.merge(router.handlers, this.handlers)
+            this.handlers = lodash.merge(_handlers, this.handlers)
             
         } else {
-
             // Add router.handlers to this.handlers under prefix
-            this.handlers[""][urlPrefix] = router.handlers
+            this.handlers[""][urlPrefix] = _handlers
 
         }
 
