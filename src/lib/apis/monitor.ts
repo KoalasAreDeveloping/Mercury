@@ -158,4 +158,8 @@ export class MonitorAPI {
 
     }
 
+    public now(): number { 
+        return performance.now()
+    }
+
 }
